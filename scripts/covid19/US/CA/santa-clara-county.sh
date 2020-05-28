@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Fetch the current table as JSON
-curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_Cases_in_Santa_Clara_County,_California.tab?action=raw' > commons.json
+curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Santa_Clara_County,_California.tab?action=raw' > commons.json
 
 # Fetch the new cases by day from the dashboard
 # Convert date from number of milliseconds to YYYY-MM-DD
