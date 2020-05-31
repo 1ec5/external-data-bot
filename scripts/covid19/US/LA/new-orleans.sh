@@ -15,7 +15,7 @@ DEATHS=$(curl "https://services5.arcgis.com/O5K6bb5dZVZcTo5M/ArcGIS/rest/service
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Add the death toll to the current day's statistics
-jq '.features | map(.attributes | .DateTime = (.DateTime / 1000 | strftime("%Y-%m-%d"))) | sort_by(.DateTime) | INDEX(.DateTime)' table.json | jq ".[${DATE}] = .[${DATE}] // {} | .[${DATE}].Deaths = ${DEATHS}" > dates.json
+jq '.features | map(.attributes | .DateTime = (.DateTime / 1000 | strftime("%Y-%m-%d"))) | sort_by(.DateTime) | INDEX(.DateTime)' cases.json | jq ".[${DATE}] = .[${DATE}] // {} | .[${DATE}].DateTime = ${DATE} | .[${DATE}].Deaths = ${DEATHS}" > dates.json
 
 # Update Commons
 jq -s --tab '(.[0].data | map({DateTime: .[0], Cases: .[1], Deaths: .[2]}) | INDEX(.DateTime)) as $old | .[0].data = ($old + .[1] | map([.DateTime, .Cases, .Deaths // $old[.DateTime].Deaths]) | sort_by(.[0])) | .[0]' commons.json dates.json | expand -t4
