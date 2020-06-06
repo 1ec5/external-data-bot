@@ -14,7 +14,6 @@ jq '.features[].attributes | .date = (.date / 1000 | localtime | strftime("%Y-%m
 # Get the text of the section with the largest font size
 curl 'https://napacounty.maps.arcgis.com/sharing/rest/content/items/83b1f0f2220b4b8bb1301dadab1e9a41/data' > ui.json
 RECOV=$(jq '.widgets[] | select(.type == "indicatorWidget") | select(.datasets[].statisticDefinitions[].onStatisticField == "Cleared").defaultSettings | map(select(.textInfo?)) | max_by(.fontSize).textInfo.text | tonumber' ui.json)
-DEATHS=$(jq '.widgets[] | select(.type == "indicatorWidget") | select(.datasets[].statisticDefinitions[].onStatisticField == "Death").defaultSettings | map(select(.textInfo?)) | max_by(.fontSize).textInfo.text | tonumber' ui.json)
 
 # Fetch cumulative hospitalization counts from a LiveStories dashboard hooked up to a Google Sheets spreadsheet
 HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=5ec97d92a789540013c3298d' | jq '.series[].data[.categories | index("Cumulative/Acumulado")].y')
@@ -25,7 +24,7 @@ HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=5ec97d92a7895400
 LATEST_DATE=$(curl 'https://www.countyofnapa.org/2770/Situation-Updates' | grep 'Situation Updates</h2>' | grep -oE '<li> *(</?strong> *)+(\w+ +\d+ *, +\d+)' | grep -oE '\w+ +\d+ *, +\d+' | head -n 1)
 LATEST_DATE=$(date -jf '%b %d, %Y' "${LATEST_DATE}" '+%Y-%m-%d')
 
-jq ".date = \"${LATEST_DATE}\" | .hospitalized = ${HOSP} | .recovered = ${RECOV} | .deaths = ${DEATHS}" cases.json > today.json
+jq ".date = \"${LATEST_DATE}\" | .hospitalized = ${HOSP} | .recovered = ${RECOV}" cases.json > today.json
 
 # Update Commons
 jq -s --tab '.[0] as $today | .[1] | .data = (.data | map([["date", "cases", "recovered", "hospitalized", "deaths"], .] | transpose | map({key: .[0], value: .[1]}) | from_entries) + [$today] | group_by(.date) | map(add) | map([.date, .cases, .recovered, .hospitalized, .deaths]))' today.json commons.json | expand -t4
