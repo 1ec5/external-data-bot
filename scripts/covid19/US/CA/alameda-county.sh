@@ -4,7 +4,7 @@
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Alameda_County,_California.tab?action=raw' > commons.json
 
 # Fetch cases and deaths by day from the API
-curl 'https://services3.arcgis.com/1iDJcsklY3l3KIjE/arcgis/rest/services/AC_dates/FeatureServer/0/query?where=1%3D1&outFields=Date,BkLHJ_Cases,BkLHJ_CumulCases,BkLHJ_Deaths,BkLHJ_CumulDeaths,ACLHJ_Cases,ACLHJ_CumulCases,ACLHJ_Deaths,ACLHJ_CumulDeaths,AC_Cases,AC_CumulCases,AC_Deaths,AC_CumulDeaths&outSR=4326&f=json' > dates.json
+curl 'https://services3.arcgis.com/1iDJcsklY3l3KIjE/arcgis/rest/services/AC_dates/FeatureServer/0/query?where=1%3D1&outFields=Date,BkLHJ_Cases,BkLHJ_CumulCases,BkLHJ_Deaths,BkLHJ_CumulDeaths,ACLHJ_Cases,ACLHJ_CumulCases,ACLHJ_Deaths,ACLHJ_CumulDeaths,AC_Cases,AC_CumulCases,AC_Deaths,AC_CumulDeaths&orderByFields=Date&f=json' > dates.json
 
 # Fetch hospitalizations by day from the API
 curl 'https://services3.arcgis.com/1iDJcsklY3l3KIjE/arcgis/rest/services/AC_hospitalized2/FeatureServer/0/query?where=1%3D1&outFields=Date,Hospitalized_COVID_19_Positive_&outSR=4326&f=json' > hosp.json
