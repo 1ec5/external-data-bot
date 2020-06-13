@@ -9,7 +9,7 @@ curl https://data.sfgov.org/resource/tvq9-ec9w.json > tvq9-ec9w.json
 # Convert date from full timestamp to YYYY-MM-DD
 # Pivot on dates as rows and counts by case disposition as columns
 # Calculate running totals
-jq -s '.[0] | group_by(.date)[] | {date: (.[0].date | strptime("%Y-%m-%dT%H:%M:%S.000") | strftime("%Y-%m-%d")), newConfirmedCases: (reduce (.[] | select(.case_disposition == "Confirmed").case_count | tonumber) as $count (0; . + $count)), newDeaths: (reduce (.[] | select(.case_disposition == "Death").case_count | tonumber) as $count (0; . + $count))}' tvq9-ec9w.json | jq -s 'foreach .[] as $row (0; . + $row.newConfirmedCases; . as $x | $row | (.totalConfirmedCases = $x))' | jq -s 'foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.totalDeaths = $x))' | jq -s > cases.json
+jq -s '.[0] | group_by(.specimen_collection_date)[] | {date: (.[0].specimen_collection_date | strptime("%Y-%m-%dT%H:%M:%S.000") | strftime("%Y-%m-%d")), newConfirmedCases: (reduce (.[] | select(.case_disposition == "Confirmed").case_count | tonumber) as $count (0; . + $count)), newDeaths: (reduce (.[] | select(.case_disposition == "Death").case_count | tonumber) as $count (0; . + $count))}' tvq9-ec9w.json | jq -s 'foreach .[] as $row (0; . + $row.newConfirmedCases; . as $x | $row | (.totalConfirmedCases = $x))' | jq -s 'foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.totalDeaths = $x))' | jq -s > cases.json
 
 # Fetch hospitalizations by day from the API
 curl https://data.sfgov.org/resource/nxjg-bhem.json > nxjg-bhem.json
