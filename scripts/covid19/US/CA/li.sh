@@ -11,4 +11,4 @@ jq -r 'map(select(.cases // .deaths // .recovered) | [.qid, ((.cases)? | tonumbe
 echo
 
 echo 'qid,P1603,qal585,S248,P8010,qal585,S248,P1120,qal585,S248'
-jq -sr '(.[0] | map({qid: .qid, fips: .fips})) + (.[1] | map(select(.stateID == "iso2:US-CA" and .level == "county") | .countyID[5:] as $fips | (.dates | keys | max) as $date | .dates[$date] | .fips = $fips | .date = ($date | "+\(.)T00:00:00Z/11"))) | group_by(.fips) | map(add | select(.cases // .deaths // .recovered) | [.qid, .cases // null, .date, "Q96777164", .recovered // null, .date, "Q96777164", .deaths // null, .date, "Q96777164"])[] | @csv' wikidata.json li.json
+jq -sr '(.[0] | map({qid: .qid, fips: .fips})) + (.[1] | map(select(.stateID == "iso2:US-CA" and .level == "county") | .countyID[5:] as $fips | (.dates | keys | max) as $date | .dates | add | .fips = $fips | .date = ($date | "+\(.)T00:00:00Z/11"))) | group_by(.fips) | map(add | select(.cases // .deaths // .recovered) | [.qid, .cases // null, .date, "Q96777164", .recovered // null, .date, "Q96777164", .deaths // null, .date, "Q96777164"])[] | @csv' wikidata.json li.json
