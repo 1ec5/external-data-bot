@@ -15,7 +15,7 @@ HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=5ec97d92a7895400
 # Fetch the HTML version of the daily update
 # Parse out the latest update's timestamp
 # Convert the date from MMMM DD, YYYY to YYYY-MM-DD
-LATEST_DATE=$(curl 'https://www.countyofnapa.org/2770/Situation-Update-Archive' | grep -oE '<li.+?> *(</?strong> *)+(\w+ +\d+ *, +\d+)' | grep -oE '\w+ +\d+ *, +\d+' | head -n 1)
+LATEST_DATE=$(curl 'https://www.countyofnapa.org/2770/Situation-Update-Archive' | grep -oE '<li.*?> *(</?strong> *)+(\w+ +\d+ *, +\d+)' | grep -oE '\w+ +\d+ *, +\d+' | head -n 1)
 LATEST_DATE=$(date -jf '%b %d, %Y' "${LATEST_DATE}" '+%Y-%m-%d')
 
 jq ".date = \"${LATEST_DATE}\" | .hospitalized = ${HOSP}" cases.json > today.json
