@@ -8,4 +8,4 @@ curl 'https://services1.arcgis.com/P5Mv5GY5S66M8Z1Q/ArcGIS/rest/services/NCOV_Ca
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Update Commons
-jq -s --tab '.[1].data = [.[0].features[].attributes | [(.Date / 1000 | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), .NewCases, .Active, .Deaths, .Recovered, .Cumulative]] | .[1]' table.json commons.json | expand -t4
+jq -s --tab '.[1].data = ([.[0].features[].attributes | (.Date / 1000 | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")) as $date | [if $date == "2019-11-28" then "2020-11-28" else $date end, .NewCases, .Active, .Deaths, .Recovered, .Cumulative]] | sort_by(.[0])) | .[1]' table.json commons.json | expand -t4
