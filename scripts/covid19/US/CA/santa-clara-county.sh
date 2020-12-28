@@ -12,7 +12,7 @@ curl 'https://data.sccgov.org/resource/6cnm-gchg.json' | jq 'map({date: (.date |
 curl 'https://data.sccgov.org/resource/ibdk-7rf5.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), totalConfirmedCasesInclUndated: (map(.count | tonumber) | add)}' > today.json
 
 # Fetch the hospitalizations by day
-curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map({date: (.date | split("T")[0]), hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
+curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: (if .date == "2021-12-27" then "2020-12-27" else .date end), hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
 
 # Fetch the deaths by day
 curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'map({date: (.date | split("T")[0]), deaths: (.cumulative | tonumber)})' > deaths.json
