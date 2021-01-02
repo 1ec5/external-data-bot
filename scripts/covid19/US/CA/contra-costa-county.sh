@@ -11,7 +11,7 @@ curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Contra_Costa_Cou
     sleep 4
 ) | websocat 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Convert date from MM/DD to YYYY-MM-DD
-jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: (.[0].qText | strptime("%m/%d") | strftime("2020-%m-%d")), newCases: .[1].qNum})' dashboard.json > newcases.json
+jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map((.[0].qText | strptime("%m/%d") | strftime("%m-%d") | if . < "03-01" then "2021-" + . else "2020-" + . end) as $date | {date: $date, newCases: .[1].qNum})' dashboard.json > newcases.json
 
 # Fetch the total cases by day from the dashboard over JSON-RPC
 (
@@ -40,7 +40,7 @@ RECOV=$(jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix[][].qNum' da
     sleep 4
 ) | websocat 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Calculate a running total
-jq '[.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: (.[0].qText | strptime("%m/%d") | strftime("2020-%m-%d")), newDeaths: (.[1].qNum + .[2].qNum)}) | foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.deaths = $x))]' dashboard.json > deaths.json
+jq '[.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map((.[0].qText | strptime("%m/%d") | strftime("%m-%d") | if . < "03-01" then "2021-" + . else "2020-" + . end) as $date | {date: $date, newDeaths: (.[1].qNum + .[2].qNum)}) | foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.deaths = $x))]' dashboard.json > deaths.json
 
 # Join the new and total cases and death tolls
 # Insert an entry for recoveries on the latest date
