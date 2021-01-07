@@ -18,4 +18,4 @@ curl 'https://data.marincounty.org/resource/uu8g-ckxh.json' | jq 'map(select(.gr
 
 # Update Commons
 # Overwrite DataWrapper values with Socrata values (retaining recoveries and any dates not covered by Socrata)
-jq -s --tab '.[0].data = ((.[1] | map({date: .[0], cases: .[1], recovered: .[2], hospitalized: .[3], deaths: .[4]})) + .[2] + [.[3]] | group_by(.date) | map(add | [.date, .cases, .recovered, .hospitalized, .deaths])) | .[0]' commons.json casesbyday.json disposition.json demographics.json | expand -t4
+jq -s --tab '.[0].data = ((.[0].data + .[1] | map({date: .[0], cases: .[1], recovered: .[2], hospitalized: .[3], deaths: .[4]})) + .[2] + [.[3]] | group_by(.date) | map(add | [.date, .cases, .recovered, .hospitalized, .deaths])) | .[0]' commons.json casesbyday.json disposition.json demographics.json | expand -t4
