@@ -15,7 +15,7 @@ curl 'https://data.sccgov.org/resource/ibdk-7rf5.json?$select=*,:updated_at' | j
 curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: (if .date >= "2021-12-27" then (.date | sub("^2021"; "2020")) else .date end), hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
 
 # Fetch the deaths by day
-curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'map(.date = (.date | split("T")[0]) | {date: (.date | sub("^2012"; "2021") | sub("^2021-12-23"; "2021-01-10")), deaths: (.cumulative | tonumber)})' > deaths.json
+curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'map(.date = (.date | split("T")[0]) | {date: (.date | sub("^2012"; "2021") | sub("^2021-12-31"; "2021-01-13")), deaths: (.cumulative | tonumber)})' > deaths.json
 
 # Update the table's existing entries with new data from the dashboard, adding a row for today
 # New case count for today is total case count for today minus total case count for yesterday
