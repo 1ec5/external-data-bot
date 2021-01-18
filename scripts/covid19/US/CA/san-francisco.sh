@@ -23,4 +23,4 @@ jq -s 'map(INDEX(.date)) | JOIN(.[1]; .[0][]; .date; add)' cases.json hosp.json 
 
 # Replace the data in the table
 # Backfill older hospitalization data that has been removed from the API using existing data from the table
-jq -s --tab '.[0].data as $orig | .[0].data = (.[1] | map([.date, .newConfirmedCases, .totalConfirmedCases, .newDeaths, .totalDeaths, .hospitalizations // (.date as $date | $orig[] | select(.[0] == $date) | .[5]) // null])) | .[0]' commons.json data.json | expand -t4
+jq -s --tab '.[0].data = ((.[0].data | map({date: .[0], newConfirmedCases: .[1], totalConfirmedCases: .[2], newDeaths: .[3], totalDeaths: .[4], hospitalizations: .[5]})) + .[1] + .[2] | group_by(.date) | map(add | [.date, .newConfirmedCases, .totalConfirmedCases, .newDeaths, .totalDeaths, .hospitalizations])) | .[0]' commons.json cases.json hosp.json | expand -t4
