@@ -19,7 +19,7 @@ jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: ((.[0].
     sleep 1; echo '{"delta":true,"handle":1,"method":"GetObject","params":["jWjFxe"],"id":3,"jsonrpc":"2.0"}'
     sleep 1; echo '{"delta":true,"handle":2,"method":"GetLayout","params":[],"id":5,"jsonrpc":"2.0"}'
     sleep 3
-) | websocat 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
+) | websocat -B 131071 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Convert date from MM/DD/YYYY to YYYY-MM-DD
 jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: ((.[0].qNum - 2) * 24 * 60 * 60 | gmtime | .[0] -= 70 | strftime("%Y-%m-%d")), cases: .[1].qNum})' dashboard.json > totalcases.json
 
