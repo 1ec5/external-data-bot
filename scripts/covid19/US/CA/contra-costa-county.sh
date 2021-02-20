@@ -9,7 +9,7 @@ curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Contra_Costa_Cou
     sleep 2; echo '{"delta":true,"handle":1,"method":"GetObject","params":["cWjnGdK"],"id":3,"jsonrpc":"2.0"}'
     sleep 2; echo '{"delta":true,"handle":2,"method":"GetLayout","params":[],"id":5,"jsonrpc":"2.0"}'
     sleep 4
-) | websocat 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
+) | websocat -B 131071 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Convert date from number of days since 1899-12-30 to YYYY-MM-DD
 jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: ((.[0].qNum - 2) * 24 * 60 * 60 | gmtime | .[0] -= 70 | strftime("%Y-%m-%d")), newCases: .[1].qNum})' dashboard.json > newcases.json
 
