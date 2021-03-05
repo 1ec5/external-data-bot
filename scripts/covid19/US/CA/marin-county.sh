@@ -11,7 +11,7 @@ curl $(curl 'https://datawrapper.dwcdn.net/Eq6Es/' | grep -oE 'https://[^"]+') |
 
 # Fetch the cases, hospitalizations, and deaths by date from Socrata
 # TODO: Remove 2021-03-27 override by 2021-03-27.
-curl 'https://data.marincounty.org/resource/wg8s-i3c7.json' | jq 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); group_by(.test_date) | map((INDEX(.status) | map_values(.cumulative_case_count | tonumber)) + {date: .[0].test_date | split("T")[0] | sub("^2021-03-27"; "2021-02-27")}) | map({date: .date, cases: .Confirmed, hospitalized: .Hospitalized, deaths: .Death}) | [eval_repeats("cases")] | [eval_repeats("hospitalized")] | [eval_repeats("deaths")]' > disposition.json
+curl 'https://data.marincounty.org/resource/wg8s-i3c7.json' | jq 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); group_by(.test_date) | map((INDEX(.status) | map_values(.cumulative_case_count | tonumber)) + {date: .[0].test_date | split("T")[0]}) | map({date: .date, cases: .Confirmed, hospitalized: .Hospitalized, deaths: .Death}) | [eval_repeats("cases")] | [eval_repeats("hospitalized")] | [eval_repeats("deaths")]' > disposition.json
 
 # Fetch the current demographics from Socrata
 # Pivot on disposition
