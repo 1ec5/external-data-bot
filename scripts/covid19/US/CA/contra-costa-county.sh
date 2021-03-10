@@ -38,7 +38,7 @@ RECOV=$(jq '.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix[][].qNum' da
     sleep 2; echo '{"delta":true,"handle":1,"method":"GetObject","params":["zKvfuW"],"id":3,"jsonrpc":"2.0"}'
     sleep 2; echo '{"delta":true,"handle":2,"method":"GetLayout","params":[],"id":5,"jsonrpc":"2.0"}'
     sleep 4
-) | websocat 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
+) | websocat -B 131071 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Calculate a running total
 jq '[.result.qLayout[].value.qHyperCube.qDataPages[].qMatrix | map({date: ((.[0].qNum - 2) * 24 * 60 * 60 | gmtime | .[0] -= 70 | strftime("%Y-%m-%d")), newDeaths: (.[1].qNum + .[2].qNum)}) | foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.deaths = $x))]' dashboard.json > deaths.json
 
