@@ -25,7 +25,7 @@ curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDat
 jq '.features | map(.attributes) | group_by(.DtDeath) | map({date: (.[0].DtDeath / 1000 | localtime | strftime("%Y-%m-%d")), newDeaths: (length / 2)}) | [foreach .[] as $date (0; . + $date.newDeaths; . as $deaths | $date | .deaths = $deaths)]' table.json > deaths.json
 
 # Query the demographics FeatureServer table for recoveries
-RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=Recovered='"'"'Y'"'"'&returnCountOnly=true&f=pjson' | jq '.count / 2')
+RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=Recovered='"'"'Y'"'"'&returnCountOnly=true&f=pjson' | jq '.count')
 
 # Fetch cumulative hospitalization counts from a LiveStories dashboard hooked up to a Google Sheets spreadsheet
 HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=5ec97d92a789540013c3298d' | jq '.series[].data[.categories | index("Cumulative/Acumulado")].y')
