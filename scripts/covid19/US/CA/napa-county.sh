@@ -30,13 +30,10 @@ RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services
 # Fetch cumulative hospitalization counts from a LiveStories dashboard hooked up to a Google Sheets spreadsheet
 HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=5ec97d92a789540013c3298d' | jq '.series[].data[.categories | index("Cumulative/Acumulado")].y')
 
-# Fetch the HTML version of the daily update
-# Parse out the latest update's timestamp
-# Convert the date from MMMM DD, YYYY to YYYY-MM-DD
-LATEST_DATE=$(curl 'https://www.countyofnapa.org/2770/Situation-Update-Archive' | grep -oE '<li.*?> *(</?strong> *)+(\w+ +\d+ *, +\d+)' | grep -oE '\w+ +\d+ *, +\d+' | head -n 1)
-LATEST_DATE=$(date -jf '%b %d, %Y' "${LATEST_DATE}" '+%Y-%m-%d')
-
-echo '{}' | jq "{date: \"${LATEST_DATE}\", hospitalized: ${HOSP}, recovered: ${RECOV}}" > today.json
+# Query the demographics FeatureServer table for the current date
+# Convert date from number of milliseconds to YYYY-MM-DD
+curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=1%3D1&outFields=EditDate_1&resultRecordCount=1&f=pjson' > dashboard.json
+jq "{date: (.features[0].attributes.EditDate_1 / 1000 | localtime | strftime(\"%Y-%m-%d\")), hospitalized: ${HOSP}, recovered: ${RECOV}}" dashboard.json > today.json
 
 # Update Commons
 jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map([["date", "cases-overwrite", "recovered", "hospitalized", "deaths-overwrite"], .] | transpose | map({key: .[0], value: .[1]}) | from_entries)) + .[1] + .[2] + .[3] + [.[4]] | group_by(.date) | map(add) | [eval_repeats("cases")] | [eval_repeats("undatedCases")] | [eval_repeats("deaths")] | map([.date, .cases + .undatedCases, .recovered, .hospitalized, .deaths]) as $data | $commons | .data = $data' commons.json cases.json undatedcases.json deaths.json today.json | expand -t4
