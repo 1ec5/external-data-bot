@@ -27,13 +27,14 @@ jq '.features | map(.attributes) | group_by(.DtDeath) | map({date: (.[0].DtDeath
 # Query the demographics FeatureServer table for recoveries
 RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=Recovered='"'"'Y'"'"'&returnCountOnly=true&f=pjson' | jq '.count')
 
-# Fetch cumulative hospitalization counts from a LiveStories dashboard hooked up to a Google Sheets spreadsheet
-HOSP=$(curl 'https://legacy.livestories.com/dataset.json?dashId=60d633a284a4ef0013ebdd37' | jq '.series[].data[0]')
-
 # Query the demographics FeatureServer table for the current date
 # Convert date from number of milliseconds to YYYY-MM-DD
 curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=1%3D1&outFields=EditDate_1&resultRecordCount=1&f=pjson' > dashboard.json
-jq "{date: (.features[0].attributes.EditDate_1 / 1000 | localtime | strftime(\"%Y-%m-%d\")), hospitalized: ${HOSP}, recovered: ${RECOV}}" dashboard.json > today.json
+jq "{date: (.features[0].attributes.EditDate_1 / 1000 | localtime | strftime(\"%Y-%m-%d\")), recovered: ${RECOV}}" dashboard.json > recoveries.json
+
+# Fetch statistics from a LiveStories dashboard hooked up to a Google Sheets spreadsheet
+curl 'https://insight.livestories.com/dataset.json?datasetId=5f59266a87d1d10013056e9e' > dashboard.json
+jq '.rows | map(select(.[1] != "") | {(.[1]): (.[2] | tonumber)}) | add | {date: (now | localtime | strftime("%Y-%m-%d")), cases: .["Cases - Cumulative/Casos Acumulados"], deaths: .["Deaths Among Residents/\nMuertes Entre Los Residentes"], hospitalized: .["Hospitalized - Cumulative/Hospitalizado Acumulado"], includesUndated: true}' dashboard.json > today.json
 
 # Update Commons
-jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map([["date", "cases-overwrite", "recovered", "hospitalized", "deaths-overwrite"], .] | transpose | map({key: .[0], value: .[1]}) | from_entries)) + .[1] + .[2] + .[3] + [.[4]] | group_by(.date) | map(add) | [eval_repeats("cases")] | [eval_repeats("undatedCases")] | [eval_repeats("deaths")] | map([.date, .cases + .undatedCases, .recovered, .hospitalized, .deaths]) as $data | $commons | .data = $data' commons.json cases.json undatedcases.json deaths.json today.json | expand -t4
+jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map([["date", "cases-overwrite", "recovered", "hospitalized", "deaths-overwrite"], .] | transpose | map({key: .[0], value: .[1]}) | from_entries)) + .[1] + .[2] + .[3] + [.[4]] | group_by(.date) | map(add) | [eval_repeats("cases")] | [eval_repeats("undatedCases")] | [eval_repeats("deaths")] | map([.date, .cases + (if .includesUndated then 0 else .undatedCases end), .recovered, .hospitalized, .deaths]) as $data | $commons | .data = $data' commons.json cases.json undatedcases.json deaths.json today.json | expand -t4
