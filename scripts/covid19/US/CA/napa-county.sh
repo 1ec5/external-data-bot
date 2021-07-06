@@ -8,24 +8,24 @@ curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDat
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Accumulate cases
-jq '.features | map(.attributes | .date = (.DtLabCollect / 1000 | localtime | strftime("%Y-%m-%d") | sub("^1992"; "2021"))) | group_by(.date) | map({date: .[0].date, newCases: (map(.newCases) | add)}) | [foreach .[] as $date (0; . + $date.newCases; . as $cases | $date | .cases = $cases)]' table.json > cases.json
+jq '.features | map(.attributes | .date = (.DtLabCollect / 1000 | localtime | strftime("%Y-%m-%d") | sub("^1992"; "2021"))) | group_by(.date) | map({date: .[0].date, newCases: (map(.newCases / 2) | add)}) | [foreach .[] as $date (0; . + $date.newCases; . as $cases | $date | .cases = $cases)]' table.json > cases.json
 
 # Query the demographics FeatureServer table for case result dates in cases where collection date is unknown
 curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=DtLabCollect%3DNULL&outFields=DtLabResult%2CCOUNT%28*%29+AS+newCases&returnDistinctValues=true&orderByFields=DtLabResult&groupByFieldsForStatistics=DtLabResult&f=json' > table.json
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Accumulate cases
-jq '.features | map(.attributes | .date = (.DtLabResult / 1000 | localtime | strftime("%Y-%m-%d"))) | [foreach .[] as $date (0; . + $date.newCases; . as $cases | $date | .undatedCases = $cases)]' table.json > undatedcases.json
+jq '.features | map(.attributes | .date = (.DtLabResult / 1000 | localtime | strftime("%Y-%m-%d"))) | [foreach .[] as $date (0; . + ($date.newCases / 2); . as $cases | $date | .undatedCases = $cases)]' table.json > undatedcases.json
 
 # Query the demographics FeatureServer table for death dates
 curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=DtDeath<>NULL&outFields=DtDeath&f=json' > table.json
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Accumulate deaths
-jq '.features | map(.attributes) | group_by(.DtDeath) | map({date: (.[0].DtDeath / 1000 | localtime | strftime("%Y-%m-%d")), newDeaths: length}) | [foreach .[] as $date (0; . + $date.newDeaths; . as $deaths | $date | .deaths = $deaths)]' table.json > deaths.json
+jq '.features | map(.attributes) | group_by(.DtDeath) | map({date: (.[0].DtDeath / 1000 | localtime | strftime("%Y-%m-%d")), newDeaths: (length / 2)}) | [foreach .[] as $date (0; . + $date.newDeaths; . as $deaths | $date | .deaths = $deaths)]' table.json > deaths.json
 
 # Query the demographics FeatureServer table for recoveries
-RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=Recovered='"'"'Y'"'"'&returnCountOnly=true&f=pjson' | jq '.count')
+RECOV=$(curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=Recovered='"'"'Y'"'"'&returnCountOnly=true&f=pjson' | jq '.count / 2')
 
 # Query the demographics FeatureServer table for the current date
 # Convert date from number of milliseconds to YYYY-MM-DD
