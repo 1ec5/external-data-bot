@@ -18,7 +18,7 @@ curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Contra_Costa_Cou
     sleep 2; echo '{"delta":true,"handle":-1,"method":"OpenDoc","params":["b7d7f869-fb91-4950-9262-0b89473ceed6","","","",false],"id":1,"jsonrpc":"2.0"}'
     sleep 2; echo '{"jsonrpc":"2.0","id":6,"handle":1,"method":"GetTableData","params":{"qOffset":0,"qRows":600,"qSyntheticMode":true,"qTableName":"NUMBERS_BY_DATE"}}'
     sleep 4
-) | websocat -B 1000000 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
+) | websocat -B 2000000 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Convert date from number of days since 1899-12-30 to YYYY-MM-DD
 # Calculate running total of deaths
 jq 'def total(key): foreach .[] as $row (0; . + $row[key]; . as $x | $row | (.["total:" + key] = $x)); .result.qData | map(.qValue | {date: ((.[0].qNumber - 2) * 24 * 60 * 60 | gmtime | .[0] -= 70 | strftime("%Y-%m-%d")), newCases: .[20].qNumber, cases: .[22].qNumber, newDeaths: .[26].qNumber, recoveries: .[13].qNumber, hospitalized: .[6].qNumber}) | sort_by(.date) | [total("newDeaths")] | map(.deaths = .["total:newDeaths"])' dashboard.json > casesbyday.json
