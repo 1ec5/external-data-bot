@@ -3,24 +3,18 @@
 # Fetch the current table as JSON
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_San_Francisco.tab?action=raw' > commons.json
 
-# Fetch the new cases and deaths by day from the API
-curl 'https://data.sfgov.org/resource/tvq9-ec9w.json?$limit=2000' > tvq9-ec9w.json
+# Fetch the cases by specimen collection day from the API
+curl 'https://data.sfgov.org/resource/gyr2-k29z.json?$select=specimen_collection_date%20as%20date,new_cases%20as%20newConfirmedCases,cumulative_cases%20as%20totalConfirmedCases' | jq 'map(.date = (.date | split("T")[0]))' > cases.json
 
-# Convert date from full timestamp to YYYY-MM-DD
-# Pivot on dates as rows and counts by case disposition as columns
-# Calculate running totals
-jq -s '.[0] | group_by(.specimen_collection_date)[] | {date: (.[0].specimen_collection_date | strptime("%Y-%m-%dT%H:%M:%S.000") | strftime("%Y-%m-%d")), newConfirmedCases: (reduce (.[] | select(.case_disposition == "Confirmed").case_count | tonumber) as $count (0; . + $count)), newDeaths: (reduce (.[] | select(.case_disposition == "Death").case_count | tonumber) as $count (0; . + $count))}' tvq9-ec9w.json | jq -s 'foreach .[] as $row (0; . + $row.newConfirmedCases; . as $x | $row | (.totalConfirmedCases = $x))' | jq -s 'foreach .[] as $row (0; . + $row.newDeaths; . as $x | $row | (.totalDeaths = $x))' | jq -s > cases.json
+# Fetch the deaths by day from the API
+curl 'https://data.sfgov.org/resource/g2di-xufg.json?$select=date_of_death%20as%20date,new_deaths%20as%20newDeaths,cumulative_deaths%20as%20totalDeaths' | jq 'map(.date = (.date | split("T")[0]))' > deaths.json
 
 # Fetch hospitalizations by day from the API
-curl 'https://data.sfgov.org/resource/nxjg-bhem.json?$limit=2500' > nxjg-bhem.json
-
-# Convert date from full timestamp to YYYY-MM-DD
-# Pivot on dates as rows and counts as columns
-jq -s '.[0] | group_by(.reportdate)[] | {date: (.[0].reportdate | strptime("%Y-%m-%dT%H:%M:%S.000") | strftime("%Y-%m-%d")), hospitalizations: (reduce (.[].patientcount | tonumber) as $count (0; . + $count))}' nxjg-bhem.json | jq -s > hosp.json
+curl 'https://data.sfgov.org/resource/nxjg-bhem.json?$select=reportdate%20as%20date,sum%28patientcount%29%20as%20hospitalized&$group=reportdate&$order=reportdate' | jq 'map(.date = (.date | split("T")[0]))' > hosp.json
 
 # Join the counts and hospitalizations
-jq -s 'map(INDEX(.date)) | JOIN(.[1]; .[0][]; .date; add)' cases.json hosp.json | jq -s > data.json
+jq -s 'add | group_by(.date) | map(add)' cases.json deaths.json hosp.json > data.json
 
 # Replace the data in the table
 # Backfill older hospitalization data that has been removed from the API using existing data from the table
-jq -s --tab '.[0].data = ((.[0].data | map({date: .[0], newConfirmedCases: .[1], totalConfirmedCases: .[2], newDeaths: .[3], totalDeaths: .[4], hospitalizations: .[5]})) + .[1] + .[2] | group_by(.date) | map(add | [.date, .newConfirmedCases, .totalConfirmedCases, .newDeaths, .totalDeaths, .hospitalizations])) | .[0]' commons.json cases.json hosp.json | expand -t4
+jq -s --tab '.[0].data = (.[1] | map([.date, (.newConfirmedCases | values | tonumber) // null, (.totalConfirmedCases | values | tonumber) // null, (.newDeaths | values | tonumber) // null, (.totalDeaths | values | tonumber) // null, (.hospitalized | values | tonumber) // null])) | .[0]' commons.json data.json | expand -t4
