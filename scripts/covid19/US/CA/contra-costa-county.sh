@@ -16,7 +16,7 @@ curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Contra_Costa_Cou
 # https://qlik.dev/apis/json-rpc/qix/doc#%23%2Fentries%2FDoc%2Fentries%2FGetTableData
 (
     sleep 2; echo '{"delta":true,"handle":-1,"method":"OpenDoc","params":["b7d7f869-fb91-4950-9262-0b89473ceed6","","","",false],"id":1,"jsonrpc":"2.0"}'
-    sleep 2; echo '{"jsonrpc":"2.0","id":6,"handle":1,"method":"GetTableData","params":{"qOffset":0,"qRows":600,"qSyntheticMode":true,"qTableName":"NUMBERS_BY_DATE"}}'
+    sleep 2; echo '{"jsonrpc":"2.0","id":6,"handle":1,"method":"GetTableData","params":{"qOffset":0,"qRows":1000,"qSyntheticMode":true,"qTableName":"NUMBERS_BY_DATE"}}'
     sleep 4
 ) | websocat -B 2000000 'wss://dashboard.cchealth.org/app/b7d7f869-fb91-4950-9262-0b89473ceed6' | tail -n 1 > dashboard.json
 # Convert date from number of days since 1899-12-30 to YYYY-MM-DD
