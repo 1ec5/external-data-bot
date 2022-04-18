@@ -18,4 +18,4 @@ curl 'https://data.marincounty.org/resource/wg8s-i3c7.json?$limit=3000' | jq 'de
 
 # Update Commons
 # Overwrite DataWrapper values with Socrata values (retaining recoveries and any dates not covered by Socrata)
-jq -s --tab '.[0].data = ((.[0].data + .[1] | map({date: .[0], cases: .[1], selfReportedCases: .[2], recovered: .[3], hospitalized: .[4], deaths: .[5]})) + .[2] | group_by(.date) | map(add | [.date, .cases, .selfReportedCases, .recovered, .hospitalized, .deaths])) | .[0]' commons.json casesbyday.json disposition.json | expand -t4
+jq -s --tab '.[0].data = ((.[0].data | map({date: .[0], cases: .[1], selfReportedCases: .[2], recovered: .[3], hospitalized: .[4], deaths: .[5]})) + (.[1] | map({date: .[0], cases: .[1], recovered: .[2], hospitalized: .[3], deaths: .[4]})) + .[2] | group_by(.date) | map(add | [.date, .cases, .selfReportedCases, .recovered, .hospitalized, .deaths])) | .[0]' commons.json casesbyday.json disposition.json | expand -t4
