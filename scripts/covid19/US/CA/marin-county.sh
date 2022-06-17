@@ -10,7 +10,7 @@ curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Marin_County,_Ca
 curl $(curl 'https://datawrapper.dwcdn.net/Eq6Es/' | grep -oE 'https://[^"]+') | grep 'JSON.parse' | sed -E 's/.*JSON\.parse\((".+")\);.*/\1/' | jq 'fromjson.data.chartData | split("\r\n") | map(split(","))[1:] | map([(.[0] | strptime("%m/%d/%Y") | strftime("%Y-%m-%d"))] + (.[1:] | map(tonumber)))' > casesbyday.json
 
 # Fetch the cases, hospitalizations, and deaths by date from Socrata
-curl 'https://data.marincounty.org/resource/wg8s-i3c7.json?$limit=3000' | jq 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); group_by(.test_date) | map((INDEX(.status) | map_values(.cumulative_case_count | tonumber)) + {date: .[0].test_date | split("T")[0]}) | map({date: .date, cases: .["PCR Confirmed"], selfReportedCases: .["Antigen Detected Only (No PCR Test)"], hospitalized: .Hospitalized, deaths: .Death}) | [eval_repeats("cases")] | [eval_repeats("hospitalized")] | [eval_repeats("deaths")]' > disposition.json
+curl 'https://data.marincounty.org/resource/wg8s-i3c7.json?$limit=4000' | jq 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); group_by(.test_date) | map((INDEX(.status) | map_values(.cumulative_case_count | tonumber)) + {date: .[0].test_date | split("T")[0]}) | map({date: .date, cases: .["PCR Confirmed"], selfReportedCases: .["Antigen Detected Only (No PCR Test)"], hospitalized: .Hospitalized, deaths: .Death}) | [eval_repeats("cases")] | [eval_repeats("hospitalized")] | [eval_repeats("deaths")]' > disposition.json
 
 ## Fetch the current demographics from Socrata
 ## Pivot on disposition
