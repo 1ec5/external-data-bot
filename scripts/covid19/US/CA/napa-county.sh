@@ -15,7 +15,7 @@ curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDat
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Accumulate cases
-jq '.features | map(.attributes | .date = (.DtLabResult / 1000 | localtime | strftime("%Y-%m-%d"))) | [foreach .[] as $date (0; . + $date.newCases; . as $cases | $date | .undatedCases = $cases)]' table.json > undatedcases.json
+jq '.features | map(.attributes | .date = (.DtLabResult | values / 1000 | localtime | strftime("%Y-%m-%d"))) | [foreach .[] as $date (0; . + $date.newCases; . as $cases | $date | .undatedCases = $cases)]' table.json > undatedcases.json
 
 # Query the demographics FeatureServer table for death dates
 curl 'https://services1.arcgis.com/Ko5rxt00spOfjMqj/ArcGIS/rest/services/CaseDataDemographics/FeatureServer/0/query?where=DtDeath<>NULL&outFields=DtDeath&f=json' > table.json
