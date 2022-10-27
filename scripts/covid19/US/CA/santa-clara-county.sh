@@ -4,7 +4,7 @@
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Santa_Clara_County,_California.tab?action=raw' > commons.json
 
 # Fetch the cases by day
-curl 'https://data.sccgov.org/resource/6cnm-gchg.json' | jq 'map({date: (.date | split("T")[0]), newCases: (.new_cases | tonumber), totalConfirmedCases: (.total_cases | tonumber)})' > casesbyday.json
+curl 'https://data.sccgov.org/resource/6cnm-gchg.json?$limit=2000' | jq 'map({date: (.date | split("T")[0]), newCases: (.new_cases | tonumber), totalConfirmedCases: (.total_cases | tonumber)})' > casesbyday.json
 
 # Fetch the current cases by gender
 # Find the current total number of cases, including undated cases, by summing all the groups including Unknown
