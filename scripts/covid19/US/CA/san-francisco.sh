@@ -4,13 +4,13 @@
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_San_Francisco.tab?action=raw' > commons.json
 
 # Fetch the cases by specimen collection day from the API
-curl 'https://data.sfgov.org/resource/gyr2-k29z.json?$select=specimen_collection_date%20as%20date,new_cases%20as%20newConfirmedCases,cumulative_cases%20as%20totalConfirmedCases' | jq 'map(.date = (.date | split("T")[0]))' > cases.json
+curl 'https://data.sfgov.org/resource/gyr2-k29z.json?$select=specimen_collection_date%20as%20date,new_cases%20as%20newConfirmedCases,cumulative_cases%20as%20totalConfirmedCases&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > cases.json
 
 # Fetch the deaths by day from the API
-curl 'https://data.sfgov.org/resource/g2di-xufg.json?$select=date_of_death%20as%20date,new_deaths%20as%20newDeaths,cumulative_deaths%20as%20totalDeaths' | jq 'map(.date = (.date | split("T")[0]))' > deaths.json
+curl 'https://data.sfgov.org/resource/g2di-xufg.json?$select=date_of_death%20as%20date,new_deaths%20as%20newDeaths,cumulative_deaths%20as%20totalDeaths&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > deaths.json
 
 # Fetch hospitalizations by day from the API
-curl 'https://data.sfgov.org/resource/nxjg-bhem.json?$select=reportdate%20as%20date,sum%28patientcount%29%20as%20hospitalized&$group=reportdate&$order=reportdate' | jq 'map(.date = (.date | split("T")[0]))' > hosp.json
+curl 'https://data.sfgov.org/resource/nxjg-bhem.json?$select=reportdate%20as%20date,sum%28patientcount%29%20as%20hospitalized&$group=reportdate&$order=reportdate&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > hosp.json
 
 # Join the counts and hospitalizations
 jq -s 'add | group_by(.date) | map(add)' cases.json deaths.json hosp.json > data.json
