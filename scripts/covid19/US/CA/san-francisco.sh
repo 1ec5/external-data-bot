@@ -4,7 +4,7 @@
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_San_Francisco.tab?action=raw' > commons.json
 
 # Fetch the cases by specimen collection day from the API
-curl 'https://data.sfgov.org/resource/gyr2-k29z.json?$select=specimen_collection_date%20as%20date,new_cases%20as%20newConfirmedCases,cumulative_cases%20as%20totalConfirmedCases&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > cases.json
+curl 'https://data.sfgov.org/resource/d2ef-idww.json?$select=specimen_collection_date%20as%20date,new_confirmed_cases%20as%20newConfirmedCases,cumulative_confirmed_cases%20as%20totalConfirmedCases&area_type=Citywide&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > cases.json
 
 # Fetch the deaths by day from the API
 curl 'https://data.sfgov.org/resource/g2di-xufg.json?$select=date_of_death%20as%20date,new_deaths%20as%20newDeaths,cumulative_deaths%20as%20totalDeaths&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > deaths.json
