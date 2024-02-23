@@ -10,7 +10,8 @@ jq 'def diff(key): [[{(key): 0}] + .[:-1], .] | transpose | map(.[1]["diff:" + k
 # Query the FeatureServer for deaths by day
 # Calculate running total of deaths
 curl 'https://services1.arcgis.com/P5Mv5GY5S66M8Z1Q/arcgis/rest/services/NCOV_CaseData_DeathsTimeline/FeatureServer/0/query?f=json&resultRecordCount=32000&where=DateofDeath%20IS%20NOT%20NULL&orderByFields=DateofDeath%20asc&outFields=DateofDeath,Deaths&resultType=standard&returnGeometry=false' > table.json
-jq 'def total(key): foreach .[] as $row (0; . + $row[key]; . as $x | $row | (.["total:" + key] = $x)); .features | map(.attributes) | group_by(.DateofDeath) | map(add) | [total("Deaths")] | map(.date = (.DateofDeath / 1000 | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")) | {date: .date, deaths: .["total:Deaths"]})' table.json > deaths.json
+curl 'https://services1.arcgis.com/P5Mv5GY5S66M8Z1Q/arcgis/rest/services/NCOV_CaseData_DeathsTimeline/FeatureServer/0/query?f=json&resultOffset=32000&resultRecordCount=32000&where=DateofDeath%20IS%20NOT%20NULL&orderByFields=DateofDeath%20asc&outFields=DateofDeath,Deaths&resultType=standard&returnGeometry=false' > table2.json
+jq -s 'def total(key): foreach .[] as $row (0; . + $row[key]; . as $x | $row | (.["total:" + key] = $x)); (.[0].features + .[1].features) | map(.attributes) | group_by(.DateofDeath) | map(add) | [total("Deaths")] | map(.date = (.DateofDeath / 1000 | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")) | {date: .date, deaths: .["total:Deaths"]})' table.json table2.json > deaths.json
 
 # Convert date from number of milliseconds to YYYY-MM-DD
 # Update Commons
