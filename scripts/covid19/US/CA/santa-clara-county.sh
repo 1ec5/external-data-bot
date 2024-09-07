@@ -13,10 +13,10 @@ jq 'def propagate_repeats(dm1): if .R == 2 then .C = .C[:1] + [null] + .C[1:] el
 curl 'https://data.sccgov.org/resource/ibdk-7rf5.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), cases: (map(.count | tonumber) | add)}' > today.json
 
 # Fetch the hospitalizations by day
-curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: (if .date >= "2021-12-27" then (.date | sub("^2021"; "2020")) else .date end), hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
+curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: .date, hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
 
 # Fetch the deaths by day
-curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'def extrapolate: foreach .[] as $row (0; ($row.date // .); . as $x | $row | .date = (.date // ($x | .[:-4] + "Z" | fromdate | gmtime | .[2] += 1 | mktime | todate))); [extrapolate] | map(.date = (.date | split("T")[0]) | select(.date != "2021-12-15") | {date: .date, deaths: (.cumulative | tonumber)})' > deaths.json
+curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'def extrapolate: foreach .[] as $row (0; ($row.date // .); . as $x | $row | .date = (.date // ($x | .[:-4] + "Z" | fromdate | gmtime | .[2] += 1 | mktime | todate))); [extrapolate] | map(.date = (.date | split("T")[0]) | {date: .date, deaths: (.cumulative | tonumber)})' > deaths.json
 
 # Update the table's existing entries with new data from the dashboard
 jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map({date: .[0], newCases: null, cases: null, hospitalized: .[3], hospitalizedPUI: .[4], deaths: null, undatedCases: .[6]})) + .[1] + .[2] + .[3] + [.[4]] | group_by(.date) | map(map(with_entries(select(.value != null))) | add) | map([.date, .newCases, .cases, .hospitalized, .hospitalizedPUI, .deaths]) | [eval_repeats(5)] as $data | $commons | .data = $data' commons.json cases.json hosp.json deaths.json today.json | expand -t4
