@@ -2,6 +2,11 @@
 
 # Fetch the current table as JSON
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_San_Francisco.tab?action=raw' > commons.json
+grep -q 'COVID-19 cases in San Francisco' commons.json
+if [ ! "$?" -eq 0 ]; then
+	echo 'Wrong script'
+	exit 1
+fi
 
 # Fetch the cases by specimen collection day from the API
 curl 'https://data.sfgov.org/resource/d2ef-idww.json?$select=specimen_collection_date%20as%20date,new_confirmed_cases%20as%20newConfirmedCases,cumulative_confirmed_cases%20as%20totalConfirmedCases&area_type=Citywide&$limit=2000' | jq 'map(.date = (.date | split("T")[0]))' > cases.json

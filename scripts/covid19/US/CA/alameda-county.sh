@@ -2,6 +2,11 @@
 
 # Fetch the current table as JSON
 curl 'https://commons.wikimedia.org/wiki/Data:COVID-19_cases_in_Alameda_County,_California.tab?action=raw' > commons.json
+grep -q 'COVID-19 cases in Alameda County, California' commons.json
+if [ ! "$?" -eq 0 ]; then
+	echo 'Wrong script'
+	exit 1
+fi
 
 # Fetch the current cases and deaths
 #curl 'https://services5.arcgis.com/ROBnTHSNjoZ2Wm1P/ArcGIS/rest/services/COVID_19_Daily_Cases_and_Deaths/FeatureServer/0/query?where=1%3D1&outFields=dtcreate%2CBerkeley_Berkeley_LHJ%2CBerkeley_Berkeley_LHJ_Cumulativ%2CBerkeley_Berkeley_LHJ_Deaths%2CBerkeley_Berkeley_LHJ_Deaths_Cu%2CAlameda_County_LHJ%2CAlameda_County_LHJ_Cumulative%2CAlameda_County_LHJ_Deaths%2CAlameda_County_LHJ_Deaths__Cumu%2CAlameda_County%2CAlameda_County__Cumulative%2CAlameda_County_Deaths%2CAlameda_County_Deaths__Cumulati&sqlFormat=none&f=json' | jq '.features | map(.attributes | map_values((strings | tonumber) // .) | .date = (.dtcreate / 1000 | todate | split("T")[0]) | select(.date < "2022-03-04" or .["Alameda_County_LHJ"] > 0))' > dates.json
