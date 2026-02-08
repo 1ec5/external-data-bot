@@ -15,18 +15,18 @@ jq 'def propagate_repeats(dm1): if .R == 2 then .C = .C[:1] + [null] + .C[1:] el
 # Fetch the current cases by gender
 # Find the current total number of cases, including undated cases, by summing all the groups including Unknown
 # Total case count for today is the total case count as of today minus the undated case count
-curl 'https://data.sccgov.org/resource/ibdk-7rf5.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), cases: (map(.count | tonumber) | add)}' > cases_today.json
+#curl 'https://data.sccgov.org/resource/ibdk-7rf5.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), cases: (map(.count | tonumber) | add)}' > cases_today.json
 
 # Fetch the hospitalizations by day
-curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: .date, hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
+#curl 'https://data.sccgov.org/resource/5xkz-6esm.json' | jq 'map(.date = (.date | split("T")[0]) | {date: .date, hospitalized: (.covid_total | tonumber), hospitalizedPUI: (.pui_total | tonumber)})' > hosp.json
 
 # Fetch the deaths by day
-curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'def extrapolate: foreach .[] as $row (0; ($row.date // .); . as $x | $row | .date = (.date // ($x | .[:-4] + "Z" | fromdate | gmtime | .[2] += 1 | mktime | todate))); [extrapolate] | map(.date = (.date | split("T")[0]) | {date: .date, deaths: (.cumulative | tonumber)})' > deaths.json
+#curl 'https://data.sccgov.org/resource/tg4j-23y2.json' | jq 'def extrapolate: foreach .[] as $row (0; ($row.date // .); . as $x | $row | .date = (.date // ($x | .[:-4] + "Z" | fromdate | gmtime | .[2] += 1 | mktime | todate))); [extrapolate] | map(.date = (.date | split("T")[0]) | {date: .date, deaths: (.cumulative | tonumber)})' > deaths.json
 
 # Fetch the current deaths by age group
 # Find the current total number of deaths, including undated deaths, by summing all the groups including Unknown
 # Total death count for today is the total death count as of today minus the undated death count
-curl 'https://data.sccgov.org/resource/pg8z-gbgv.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), deaths: (map(.count | tonumber) | add)}' > deaths_today.json
+#curl 'https://data.sccgov.org/resource/pg8z-gbgv.json?$select=*,:updated_at' | jq '{date: (.[0][":updated_at"][:19] + "Z" | fromdate | gmtime | .[3] -= 7 | mktime | strftime("%Y-%m-%d")), deaths: (map(.count | tonumber) | add)}' > deaths_today.json
 
 # Update the table's existing entries with new data from the dashboard
-jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map({date: .[0], newCases: null, cases: null, hospitalized: .[3], hospitalizedPUI: .[4], deaths: .[5], undatedCases: .[6]})) + .[1] + .[2] + .[3] + [.[4]] + [.[5]] | group_by(.date) | map(map(with_entries(select(.value != null))) | add) | map([.date, .newCases, .cases, .hospitalized, .hospitalizedPUI, .deaths]) | [eval_repeats(5)] as $data | $commons | .data = $data' commons.json cases.json hosp.json deaths.json cases_today.json deaths_today.json | expand -t4
+jq -s --tab 'def eval_repeats(key): foreach .[] as $row (0; ($row[key] // .); . as $x | $row | (.[key] = (.[key] // $x))); .[0] as $commons | (.[0].data | map({date: .[0], newCases: null, cases: null, hospitalized: .[3], hospitalizedPUI: .[4], deaths: .[5], undatedCases: .[6]})) + .[1] | group_by(.date) | map(map(with_entries(select(.value != null))) | add) | map([.date, .newCases, .cases, .hospitalized, .hospitalizedPUI, .deaths]) | [eval_repeats(5)] as $data | $commons | .data = $data' commons.json cases.json | expand -t4
